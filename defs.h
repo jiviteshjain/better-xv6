@@ -120,6 +120,7 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
+void            inc_runtime(void);  // c4c76835d1286fa240fe02c4da81f6d4
 
 // swtch.S
 void            swtch(struct context**, struct context*);

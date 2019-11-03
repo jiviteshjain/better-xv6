@@ -89,6 +89,12 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
 
+  // Set start time to current time and run time to 0
+  // c4c76835d1286fa240fe02c4da81f6d4
+  p->start_time = ticks;
+  p->run_time = 0;
+  p->end_time = 0;
+
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -113,6 +119,21 @@ found:
   p->context->eip = (uint)forkret;
 
   return p;
+}
+
+// c4c76835d1286fa240fe02c4da81f6d4
+// This function is called with tickslock acquired after every CPU cycle
+// Loops through the process table and increments the run time of every running process.
+void inc_runtime() {
+  acquire(&ptable.lock);
+
+  for (struct proc* p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if (p->state == RUNNING) {
+      p->run_time++;
+    }
+  }
+
+  release(&ptable.lock);
 }
 
 //PAGEBREAK: 32
@@ -233,6 +254,10 @@ exit(void)
 
   if(curproc == initproc)
     panic("init exiting");
+
+  // c4c76835d1286fa240fe02c4da81f6d4
+  // Set the end time of the process as the current CPU cycle
+  p->end_time = ticks;
 
   // Close all open files.
   for(fd = 0; fd < NOFILE; fd++){
