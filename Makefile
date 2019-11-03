@@ -181,7 +181,7 @@ UPROGS=\
 	_usertests\
 	_wc\
 	_zombie\
-	_test_waitx\
+	_time\
 	# c4c76835d1286fa240fe02c4da81f6d4
 
 fs.img: mkfs README $(UPROGS)
@@ -255,7 +255,7 @@ EXTRA=\
 	printf.c umalloc.c\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
-	test_waitx.c\
+	time.c\
 	# c4c76835d1286fa240fe02c4da81f6d4
 
 dist:
