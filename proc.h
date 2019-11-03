@@ -50,9 +50,12 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
 
-  int start_time;              // Start time of the process
+  int start_time;              // Start time of the process c4c76835d1286fa240fe02c4da81f6d4
   int end_time;                // End time of the process
   int run_time;                // Run time of the process
+
+  int priority;                // The priority of process for PBS, between [0,100], default 60, less is higher
+  int timeslices;              // The number of CPU timeslices received by the process c4c76835d1286fa240fe02c4da81f6d4
 };
 
 // Process memory is laid out contiguously, low addresses first:

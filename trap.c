@@ -101,8 +101,11 @@ trap(struct trapframe *tf)
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
     exit();
 
+#if SCHEDULER!=SCHED_FCFS 
   // Force process to give up CPU on clock tick.
   // If interrupts were on while locks held, would need to check nlock.
+  // c4c76835d1286fa240fe02c4da81f6d4
+  
   if(myproc() && myproc()->state == RUNNING &&
      tf->trapno == T_IRQ0+IRQ_TIMER)
     yield();
@@ -110,4 +113,5 @@ trap(struct trapframe *tf)
   // Check if the process has been killed since we yielded
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
     exit();
+#endif
 }

@@ -16,7 +16,7 @@ int main(void) {
                     printf(1, "i: %d pid: %d\n", i, my_pid);
             #endif
             volatile int j = 0;
-            for (volatile int k = 0; k < 10000; k++) {
+            for (volatile int k = 0; k < 10000000; k++) {
                 j++;
                 j = j % 12;
             }

@@ -95,6 +95,9 @@ found:
   p->run_time = 0;
   p->end_time = 0;
 
+  p->priority = 60;
+  p->timeslices = 0;
+
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -434,7 +437,7 @@ scheduler(void)
     }
   #elif SCHEDULER == SCHED_FCFS
     while (1) {
-      // Enable interrupts on this processor - does not affect FCFS, because the same process gets selected again
+      // Enable interrupts on this processor - yielding disabled for FCFS
       sti();
       // Loop over process table looking for the process with earliest creation time to run
       int min_time = ticks + 100; // processes can't be created in the future
@@ -477,11 +480,62 @@ scheduler(void)
 
       release(&ptable.lock);
     }
-  #elif SCHEDULER == SCHED_PBS
+#elif SCHEDULER == SCHED_PBS
+  while (1) {
+    // Enable interrupts on this processor
+    sti();
+    // Loop over process table looking for the process with the highest priority (and least timeslices to break ties)
+    int high_priority = 101;
+    int min_timeslices = ticks + 100; // can't have more timeslices than CPU ticks
+    struct proc *selected_proc = 0;
 
-  #elif SCHEDULER == SCHED_MLFQ
+    acquire(&ptable.lock);
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+      if (p->state != RUNNABLE) {
+        continue;
+      }
 
-  #endif
+      if (p->priority < high_priority) {
+        high_priority = p->priority;
+        min_timeslices = p->timeslices;
+        selected_proc = p;
+      } else if (p->priority == high_priority && p->timeslices < min_timeslices) {
+        min_timeslices = p->timeslices;
+        selected_proc = p;
+      }
+    }
+
+    if (selected_proc == 0) {
+      release(&ptable.lock);
+      continue;
+    }
+      
+#ifdef DEBUG
+    cprintf("PBS: On core: %d, scheduling %d %s\n", c->apicid, selected_proc->pid, selected_proc->name);
+#endif
+
+    selected_proc->timeslices++;
+    // Switch to chosen process.  It is the process's job
+    // to release ptable.lock and then reacquire it
+    // before jumping back to us.
+    c->proc = selected_proc;
+    switchuvm(selected_proc);
+    selected_proc->state = RUNNING;
+
+    swtch(&(c->scheduler), selected_proc->context);
+    switchkvm();
+
+    // Process is done running for now.
+    // It should have changed its p->state before coming back.
+    c->proc = 0;
+
+    release(&ptable.lock);
+  }
+
+
+#elif SCHEDULER == SCHED_MLFQ
+
+#endif
 
 }
 
