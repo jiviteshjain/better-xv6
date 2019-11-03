@@ -90,6 +90,23 @@ ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
 CFLAGS += -fno-pie -nopie
 endif
 
+# Set scheduler
+SCHED_MACRO = -D SCHEDULER=SCHED_RR
+
+ifeq ($(SCHEDULER), FCFS)
+SCHED_MACRO = -D SCHEDULER=SCHED_FCFS
+endif
+
+ifeq ($(SCHEDULER), PBS)
+SCHED_MACRO = -D SCHEDULER=SCHED_PBS
+endif
+
+ifeq ($(SCHEDULER), MLFQ)
+SCHED_MACRO = -D SCHEDULER=SCHED_MLFQ
+endif
+
+CFLAGS += $(SCHED_MACRO)
+
 xv6.img: bootblock kernel
 	dd if=/dev/zero of=xv6.img count=10000
 	dd if=bootblock of=xv6.img conv=notrunc
@@ -182,6 +199,7 @@ UPROGS=\
 	_wc\
 	_zombie\
 	_time\
+	_test_sched\
 	# c4c76835d1286fa240fe02c4da81f6d4
 
 fs.img: mkfs README $(UPROGS)
@@ -256,6 +274,7 @@ EXTRA=\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
 	time.c\
+	test_sched.c\
 	# c4c76835d1286fa240fe02c4da81f6d4
 
 dist:

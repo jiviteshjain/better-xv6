@@ -400,33 +400,83 @@ scheduler(void)
   struct cpu *c = mycpu();
   c->proc = 0;
   
-  for(;;){
-    // Enable interrupts on this processor.
-    sti();
+  // c4c76835d1286fa240fe02c4da81f6d4
+  #if SCHEDULER == SCHED_RR
+    for(;;){
+      // Enable interrupts on this processor.
+      sti();
 
-    // Loop over process table looking for process to run.
-    acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
+      // Loop over process table looking for process to run.
+      acquire(&ptable.lock);
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if(p->state != RUNNABLE)
+          continue;
+
+        // Switch to chosen process.  It is the process's job
+        // to release ptable.lock and then reacquire it
+        // before jumping back to us.
+        c->proc = p;
+        switchuvm(p);
+        p->state = RUNNING;
+
+        swtch(&(c->scheduler), p->context);
+        switchkvm();
+
+        // Process is done running for now.
+        // It should have changed its p->state before coming back.
+        c->proc = 0;
+      }
+      release(&ptable.lock);
+    }
+  #elif SCHEDULER == SCHED_FCFS
+    while (1) {
+      // Enable interrupts on this processor - does not affect FCFS, because the same process gets selected again
+      sti();
+      // Loop over process table looking for the process with earliest creation time to run
+      int min_time = ticks + 100; // processes can't be created in the future
+      struct proc* selected_proc = 0;
+
+      acquire(&ptable.lock);
+      for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+        if (p->state != RUNNABLE) {
+          continue;
+        }
+
+        if (p->start_time < min_time) {
+          min_time = p->start_time;
+          selected_proc = p;
+        }
+      }
+
+      if (selected_proc == 0) {
+        release(&ptable.lock);
         continue;
-
+      }
+      
+      // cprintf("On core: %d, scheduling %d %s\n", c->apicid, selected_proc->pid, selected_proc->name);
+      
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
+      c->proc = selected_proc;
+      switchuvm(selected_proc);
+      selected_proc->state = RUNNING;
 
-      swtch(&(c->scheduler), p->context);
+      swtch(&(c->scheduler), selected_proc->context);
       switchkvm();
 
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       c->proc = 0;
-    }
-    release(&ptable.lock);
 
-  }
+      release(&ptable.lock);
+    }
+  #elif SCHEDULER == SCHED_PBS
+
+  #elif SCHEDULER == SCHED_MLFQ
+
+  #endif
+
 }
 
 // Enter scheduler.  Must hold only ptable.lock

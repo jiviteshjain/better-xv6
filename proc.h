@@ -60,3 +60,9 @@ struct proc {
 //   original data and bss
 //   fixed-size stack
 //   expandable heap
+
+// Scheduling algorithms used by scheduler c4c76835d1286fa240fe02c4da81f6d4
+#define SCHED_RR 0
+#define SCHED_FCFS 1
+#define SCHED_PBS 2
+#define SCHED_MLFQ 3
