@@ -388,6 +388,27 @@ waitx(int* wtime, int* rtime)
   }
 }
 
+// c4c76835d1286fa240fe02c4da81f6d4
+int set_priority(int new_priority) {
+  if (new_priority < 0 || new_priority > 100) {
+    return -1;
+  }
+
+  int old_priority;
+  
+  acquire(&ptable.lock);
+  
+  old_priority = myproc()->priority;
+  myproc()->priority = new_priority;
+
+  release(&ptable.lock);
+
+  if (new_priority > old_priority) {
+    yield();
+  }
+  return old_priority;
+}
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -461,7 +482,7 @@ scheduler(void)
       }
       
 #ifdef DEBUG
-      cprintf("On core: %d, scheduling %d %s\n", c->apicid, selected_proc->pid, selected_proc->name);
+      cprintf("On core: %d, scheduling %d %s with stime %d\n", c->apicid, selected_proc->pid, selected_proc->name, selected_proc->start_time);
 #endif
 
       // Switch to chosen process.  It is the process's job
@@ -511,7 +532,7 @@ scheduler(void)
     }
       
 #ifdef DEBUG
-    cprintf("PBS: On core: %d, scheduling %d %s\n", c->apicid, selected_proc->pid, selected_proc->name);
+    cprintf("PBS: On core: %d, scheduling %d %s with priority %d\n", c->apicid, selected_proc->pid, selected_proc->name, selected_proc->priority);
 #endif
 
     selected_proc->timeslices++;

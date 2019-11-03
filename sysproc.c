@@ -39,6 +39,15 @@ int sys_waitx(void) {
   return waitx(wtime, rtime);
 }
 
+// c4c76835d1286fa240fe02c4da81f6d4
+int sys_set_priority(void) {
+  int new_priority;
+  if (argint(0, &new_priority) < 0) {
+    return -1;
+  }
+  return set_priority(new_priority);
+}
+
 int
 sys_kill(void)
 {
