@@ -257,7 +257,7 @@ exit(void)
 
   // c4c76835d1286fa240fe02c4da81f6d4
   // Set the end time of the process as the current CPU cycle
-  p->end_time = ticks;
+  curproc->end_time = ticks;
 
   // Close all open files.
   for(fd = 0; fd < NOFILE; fd++){
@@ -311,6 +311,55 @@ wait(void)
       havekids = 1;
       if(p->state == ZOMBIE){
         // Found one.
+        pid = p->pid;
+        kfree(p->kstack);
+        p->kstack = 0;
+        freevm(p->pgdir);
+        p->pid = 0;
+        p->parent = 0;
+        p->name[0] = 0;
+        p->killed = 0;
+        p->state = UNUSED;
+        release(&ptable.lock);
+        return pid;
+      }
+    }
+
+    // No point waiting if we don't have any children.
+    if(!havekids || curproc->killed){
+      release(&ptable.lock);
+      return -1;
+    }
+
+    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    sleep(curproc, &ptable.lock);  //DOC: wait-sleep
+  }
+}
+
+// c4c76835d1286fa240fe02c4da81f6d4
+// Wait for a child process to exit and return its pid.
+// Return -1 if this process has no children.
+// Also populate the wait time and run time of the child process.
+int
+waitx(int* wtime, int* rtime)
+{
+  struct proc *p;
+  int havekids, pid;
+  struct proc *curproc = myproc();
+  
+  acquire(&ptable.lock);
+  for(;;){
+    // Scan through table looking for exited children.
+    havekids = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->parent != curproc)
+        continue;
+      havekids = 1;
+      if(p->state == ZOMBIE){
+        // Found one.
+        *rtime = p->run_time;
+        *wtime = p->end_time - p->start_time - p->run_time;
+
         pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
