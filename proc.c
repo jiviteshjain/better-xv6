@@ -412,6 +412,10 @@ scheduler(void)
         if(p->state != RUNNABLE)
           continue;
 
+#ifdef DEBUG
+        cprintf("On core: %d, scheduling %d %s\n", c->apicid, p->pid, p->name);
+#endif
+
         // Switch to chosen process.  It is the process's job
         // to release ptable.lock and then reacquire it
         // before jumping back to us.
@@ -453,8 +457,10 @@ scheduler(void)
         continue;
       }
       
-      // cprintf("On core: %d, scheduling %d %s\n", c->apicid, selected_proc->pid, selected_proc->name);
-      
+#ifdef DEBUG
+      cprintf("On core: %d, scheduling %d %s\n", c->apicid, selected_proc->pid, selected_proc->name);
+#endif
+
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.

@@ -10,9 +10,11 @@ int main(void) {
     for (int i = 0; i < 10; i++) {
         pid = fork();
         if (pid == 0) {
-            int my_pid = getpid();
-            for (int g = 0; g < 5; g++)
-                printf(1, "i: %d pid: %d\n", i, my_pid);
+            #ifndef DEBUG
+                int my_pid = getpid();
+                for (int g = 0; g < 5; g++)
+                    printf(1, "i: %d pid: %d\n", i, my_pid);
+            #endif
             volatile int j = 0;
             for (volatile int k = 0; k < 10000; k++) {
                 j++;
