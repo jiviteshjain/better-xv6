@@ -7,6 +7,7 @@
 #include "proc.h"
 #include "spinlock.h"
 
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -23,7 +24,12 @@ static void wakeup1(void *chan);
 void
 pinit(void)
 {
-  initlock(&ptable.lock, "ptable");
+    for (int i = 0; i < NUM_QUEUES; i++) {
+      // No need to lock right now, because the scheduler and all aren't even running
+      // c4c76835d1286fa240fe02c4da81f6d4
+      queues[i] = 0;
+    }
+    initlock(&ptable.lock, "ptable");
 }
 
 // Must be called with interrupts disabled
@@ -97,6 +103,12 @@ found:
 
   p->priority = 60;
   p->timeslices = 0;
+
+  p->age_time = ticks;
+  p->cur_timeslices = 0;
+  p->punish = 0;
+  p->queue = 0;
+  queues[0] = push(queues[0], p);
 
   release(&ptable.lock);
 
@@ -555,7 +567,74 @@ scheduler(void)
 
 
 #elif SCHEDULER == SCHED_MLFQ
+  while (1) {
+    // Enable interrupts on this processor
+    sti();
 
+    acquire(&ptable.lock);
+
+    // Age the processes
+    for (int i = 1; i < NUM_QUEUES; i++) {
+      split(&queues[i], &queues[i - 1], AGE_LIMIT);
+    }
+
+    // Loop through the queues to find a process to run
+    p = 0;
+    for (int i = 0; i < NUM_QUEUES; i++) {
+      if (length(queues[i]) == 0) {
+        continue;
+      }
+      p = queues[i]->p;
+      queues[i] = pop(queues[i]);
+      break;
+    }
+
+    if (p == 0) {
+      release(&ptable.lock);
+      continue;
+    }
+
+    p->cur_timeslices++;
+
+#ifdef DEBUG
+    cprintf("MLFQ: On core %d scheduling %d %s from queue %d with %d timeslices and %d age time\n", c->apicid, p->pid, p->name, p->queue, p->cur_timeslices, p->age_time);
+#endif
+
+    // Switch to chosen process.  It is the process's job
+    // to release ptable.lock and then reacquire it
+    // before jumping back to us.
+    c->proc = p;
+    switchuvm(p);
+    p->state = RUNNING;
+
+    swtch(&(c->scheduler), p->context);
+    switchkvm();
+
+    // Process is done running for now.
+    // It should have changed its p->state before coming back.
+    c->proc = 0;
+
+    // Back from p
+    if (p != 0 && p->state == RUNNABLE) {
+      if (p->punish == 0) {
+        p->cur_timeslices = 0;
+        p->age_time = ticks;
+        queues[p->queue] = push(queues[p->queue], p);
+      } else {
+        p->cur_timeslices = 0;
+        p->punish = 0;
+        p->age_time = ticks;
+        
+        if (p->queue != NUM_QUEUES-1) {
+          p->queue++;
+        }
+
+        queues[p->queue] = push(queues[p->queue], p);
+      }
+    }
+
+    release(&ptable.lock);
+  }
 #endif
 
 }
@@ -664,9 +743,15 @@ wakeup1(void *chan)
 {
   struct proc *p;
 
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if(p->state == SLEEPING && p->chan == chan)
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if(p->state == SLEEPING && p->chan == chan) {
       p->state = RUNNABLE;
+      // c4c76835d1286fa240fe02c4da81f6d4
+      p->cur_timeslices = 0;
+      p->age_time = ticks;
+      queues[p->queue] = push(queues[p->queue], p);
+    }
+  }
 }
 
 // Wake up all processes sleeping on chan.

@@ -56,6 +56,11 @@ struct proc {
 
   int priority;                // The priority of process for PBS, between [0,100], default 60, less is higher
   int timeslices;              // The number of CPU timeslices received by the process c4c76835d1286fa240fe02c4da81f6d4
+
+  int age_time;                // The time when it entered the current queue and is waiting since
+  int cur_timeslices;          // The number of timeslices received in current run c4c76835d1286fa240fe02c4da81f6d4
+  int queue;                   // The ready queue in which the process is waiting
+  int punish;
 };
 
 // Process memory is laid out contiguously, low addresses first:
@@ -69,3 +74,25 @@ struct proc {
 #define SCHED_FCFS 1
 #define SCHED_PBS 2
 #define SCHED_MLFQ 3
+
+
+// Struct for MLFQ scheduling queue nodes c4c76835d1286fa240fe02c4da81f6d4
+struct node {
+    struct node *next;
+    struct proc *p;
+};
+
+#define NUM_QUEUES (int)5
+#define TIMESLICE(i) (int)(1<<i)
+#define AGE_LIMIT (int)50
+
+struct node *queues[5]; // lower indices are higher priority
+
+// Struct for getpinfo c4c76835d1286fa240fe02c4da81f6d4
+struct proc_stat {
+  int pid;
+  int runtime;
+  int num_run;
+  int current_queue;
+  int ticks[5];
+};

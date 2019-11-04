@@ -101,17 +101,34 @@ trap(struct trapframe *tf)
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
     exit();
 
-#if SCHEDULER!=SCHED_FCFS 
+#if (SCHEDULER == SCHED_RR || SCHEDULER == SCHED_PBS) 
+  // c4c76835d1286fa240fe02c4da81f6d4
   // Force process to give up CPU on clock tick.
   // If interrupts were on while locks held, would need to check nlock.
-  // c4c76835d1286fa240fe02c4da81f6d4
   
-  if(myproc() && myproc()->state == RUNNING &&
-     tf->trapno == T_IRQ0+IRQ_TIMER)
+  if(myproc() && myproc()->state == RUNNING && tf->trapno == T_IRQ0+IRQ_TIMER)
     yield();
 
   // Check if the process has been killed since we yielded
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
     exit();
+
+// #elif (SCHEDULER == SCHED_MLFQ)
+  // c4c76835d1286fa240fe02c4da81f6d4
+  // Force process to give up CPU on clock tick.
+  // If interrupts were on while locks held, would need to check nlock.
+
+  if (myproc() && myproc()->state == RUNNING && tf->trapno == T_IRQ0 + IRQ_TIMER) {
+    if (myproc()->cur_timeslices >= TIMESLICE(myproc()->queue)) {
+      myproc()->punish = 1;
+      yield();
+    } else {
+      myproc()->cur_timeslices++;
+    }
+  }
+
+  // Check if the process has been killed since we yielded
+  if (myproc() && myproc()->killed && (tf->cs & 3) == DPL_USER)
+      exit();
 #endif
 }
