@@ -24,6 +24,8 @@ static void wakeup1(void *chan);
 void
 pinit(void)
 {
+    initlock(&ptable.lock, "ptable");
+    acquire(&ptable.lock);
     for (int i = 0; i < NUM_QUEUES; i++) {
       // No need to lock right now, because the scheduler and all aren't even running
       // c4c76835d1286fa240fe02c4da81f6d4
@@ -32,7 +34,7 @@ pinit(void)
     for (int i = 0; i < NPROC; i++) {
       surplus_nodes[i].use = 0;
     }
-    initlock(&ptable.lock, "ptable");
+    release(&ptable.lock);
 }
 
 // Must be called with interrupts disabled
@@ -111,7 +113,7 @@ found:
   p->cur_timeslices = 0;
   p->punish = 0;
   p->queue = 0;
-  queues[0] = push(queues[0], p);
+  // queues[0] = push(queues[0], p);
 
   release(&ptable.lock);
 
@@ -154,6 +156,18 @@ void inc_runtime() {
   release(&ptable.lock);
 }
 
+void punisher() {
+    acquire(&ptable.lock);
+    myproc()->punish = 1;
+    release(&ptable.lock);
+}
+
+void inc_timeslice() {
+    acquire(&ptable.lock);
+    myproc()->cur_timeslices++;
+    release(&ptable.lock);
+}
+
 //PAGEBREAK: 32
 // Set up first user process.
 void
@@ -188,6 +202,7 @@ userinit(void)
   acquire(&ptable.lock);
 
   p->state = RUNNABLE;
+  queues[0] = push(queues[0], p); // c4c76835d1286fa240fe02c4da81f6d4
 
   release(&ptable.lock);
 }
@@ -254,6 +269,7 @@ fork(void)
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
+  queues[0] = push(queues[0], np); // c4c76835d1286fa240fe02c4da81f6d4
 
   release(&ptable.lock);
 
@@ -585,6 +601,7 @@ scheduler(void)
     p = 0;
     for (int i = 0; i < NUM_QUEUES; i++) {
       if (length(queues[i]) == 0) {
+        // cprintf("*%d\n", i);
         continue;
       }
       p = queues[i]->p;
@@ -592,7 +609,7 @@ scheduler(void)
       break;
     }
 
-    if (p == 0) {
+    if (p == 0 || p->state != RUNNABLE) {
       release(&ptable.lock);
       continue;
     }
@@ -748,11 +765,11 @@ wakeup1(void *chan)
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
     if(p->state == SLEEPING && p->chan == chan) {
+      queues[p->queue] = push(queues[p->queue], p);
       p->state = RUNNABLE;
       // c4c76835d1286fa240fe02c4da81f6d4
       p->cur_timeslices = 0;
       p->age_time = ticks;
-      queues[p->queue] = push(queues[p->queue], p);
     }
   }
 }
@@ -816,7 +833,7 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
-    cprintf("%d %s %s", p->pid, state, p->name);
+    cprintf("%d %s %s QUEUE: %d TIMESLICES %d", p->pid, state, p->name, p->queue, p->timeslices); // // c4c76835d1286fa240fe02c4da81f6d4
     if(p->state == SLEEPING){
       getcallerpcs((uint*)p->context->ebp+2, pc);
       for(i=0; i<10 && pc[i] != 0; i++)

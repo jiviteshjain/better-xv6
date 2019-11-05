@@ -117,13 +117,16 @@ trap(struct trapframe *tf)
   // c4c76835d1286fa240fe02c4da81f6d4
   // Force process to give up CPU on clock tick.
   // If interrupts were on while locks held, would need to check nlock.
-
   if (myproc() && myproc()->state == RUNNING && tf->trapno == T_IRQ0 + IRQ_TIMER) {
     if (myproc()->cur_timeslices >= TIMESLICE(myproc()->queue)) {
-      myproc()->punish = 1;
+      punisher();
       yield();
     } else {
-      myproc()->cur_timeslices++;
+        inc_timeslice();
+#ifdef DEBUG
+        cprintf("TRAP: Rescheduling %d %s from queue %d with %d timeslices and %d age time\n", myproc()->pid, myproc()->name, myproc()->queue, myproc()->cur_timeslices, myproc()->age_time);
+#endif
+        return;
     }
   }
 

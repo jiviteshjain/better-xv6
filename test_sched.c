@@ -8,12 +8,10 @@
 int main(void) {
     set_priority(0);
     int pid;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 20; i++) {
         pid = fork();
         if (pid == 0) {
-            if (i % 3 == 0) {
-                set_priority(i+10);
-            }
+            // set_priority(i*10);
 #ifndef DEBUG
             int my_pid = getpid();
             for (int g = 0; g < 5; g++)
@@ -26,8 +24,9 @@ int main(void) {
             }
             exit();
         }
+        printf(2, "***Made %d\n", pid);
     }
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 20; i++) {
         wait();
     }
     exit();
