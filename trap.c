@@ -113,7 +113,7 @@ trap(struct trapframe *tf)
   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)
     exit();
 
-// #elif (SCHEDULER == SCHED_MLFQ)
+#elif (SCHEDULER == SCHED_MLFQ)
   // c4c76835d1286fa240fe02c4da81f6d4
   // Force process to give up CPU on clock tick.
   // If interrupts were on while locks held, would need to check nlock.
@@ -129,6 +129,6 @@ trap(struct trapframe *tf)
 
   // Check if the process has been killed since we yielded
   if (myproc() && myproc()->killed && (tf->cs & 3) == DPL_USER)
-      exit();
+    exit();
 #endif
 }

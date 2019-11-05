@@ -1,5 +1,6 @@
 // c4c76835d1286fa240fe02c4da81f6d4
 
+#include "types.h"
 #include "defs.h"
 #include "memlayout.h"
 #include "mmu.h"
@@ -7,11 +8,24 @@
 #include "proc.h"
 #include "spinlock.h"
 #include "traps.h"
-#include "types.h"
 #include "x86.h"
 
+struct node* q_alloc() {
+    for (int i = 0; i < NPROC; i++) {
+        if (surplus_nodes[i].use == 0) {
+            surplus_nodes[i].use = 1;
+            return &surplus_nodes[i];
+        }
+    }
+    return 0;
+}
+
+void q_free(struct node* p) {
+    p->use = 0;
+}
+
 struct node* push(struct node* head, struct proc* p) {
-    struct node* new = (struct node*)malloc(sizeof(struct node));
+    struct node* new = q_alloc();
     new->p = p;
     new->next = 0;
 
@@ -33,8 +47,8 @@ struct node* pop(struct node* head) {
     }
 
     struct node* temp = head->next;
-    free(head);
-    return head->next;
+    q_free(head);
+    return temp;
 }
 
 // shifts all nodes with node->p->age_time > threshold from FROM list to TO list

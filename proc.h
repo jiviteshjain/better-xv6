@@ -80,13 +80,15 @@ struct proc {
 struct node {
     struct node *next;
     struct proc *p;
+    int use;
 };
 
 #define NUM_QUEUES (int)5
 #define TIMESLICE(i) (int)(1<<i)
 #define AGE_LIMIT (int)50
 
-struct node *queues[5]; // lower indices are higher priority
+struct node surplus_nodes[NPROC];
+struct node *queues[NUM_QUEUES];  // lower indices are higher priority
 
 // Struct for getpinfo c4c76835d1286fa240fe02c4da81f6d4
 struct proc_stat {

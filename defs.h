@@ -190,6 +190,8 @@ int             copyout(pde_t*, uint, void*, uint);
 void            clearpteu(pde_t *pgdir, char *uva);
 
 // queue.c c4c76835d1286fa240fe02c4da81f6d4
+struct node* q_alloc();
+void q_free(struct node* p);
 struct node* push(struct node* head, struct proc* p);
 struct node* pop(struct node* head);
 int split(struct node** from, struct node** to, int threshold);

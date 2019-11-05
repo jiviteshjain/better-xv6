@@ -29,6 +29,9 @@ pinit(void)
       // c4c76835d1286fa240fe02c4da81f6d4
       queues[i] = 0;
     }
+    for (int i = 0; i < NPROC; i++) {
+      surplus_nodes[i].use = 0;
+    }
     initlock(&ptable.lock, "ptable");
 }
 
