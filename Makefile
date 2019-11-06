@@ -207,6 +207,7 @@ UPROGS=\
 	_zombie\
 	_time\
 	_test_sched\
+	_ps\
 	# c4c76835d1286fa240fe02c4da81f6d4
 
 fs.img: mkfs README $(UPROGS)
@@ -282,6 +283,7 @@ EXTRA=\
 	.gdbinit.tmpl gdbutil\
 	time.c\
 	test_sched.c\
+	ps.c\
 	# c4c76835d1286fa240fe02c4da81f6d4
 
 dist:

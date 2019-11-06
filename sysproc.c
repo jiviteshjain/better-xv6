@@ -30,10 +30,10 @@ sys_wait(void)
 int sys_waitx(void) {
   int* wtime;
   int* rtime;
-  if (argptr(0, (void*)&wtime, 8) < 0) {
+  if (argptr(0, (void*)&wtime, sizeof(int*)) < 0) {
       return -1;
   }
-  if (argptr(1, (void*)&rtime, 8) < 0) {
+  if (argptr(1, (void*)&rtime, sizeof(int*)) < 0) {
     return -1;
   }
   return waitx(wtime, rtime);
@@ -46,6 +46,22 @@ int sys_set_priority(void) {
     return -1;
   }
   return set_priority(new_priority);
+}
+
+// c4c76835d1286fa240fe02c4da81f6d4
+int sys_getpinfo(void) {
+  int pid;
+  struct proc_stat* ps;
+
+  if (argint(0, &pid) < 0) {
+    return -1;
+  }
+
+  if(argptr(1, (void*)&ps, sizeof(struct proc_stat*)) < 0) {
+    return -1;
+  }
+
+  return getpinfo(pid, ps);
 }
 
 int

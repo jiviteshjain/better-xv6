@@ -13,6 +13,8 @@ struct cpu {
 extern struct cpu cpus[NCPU];
 extern int ncpu;
 
+#define NUM_QUEUES (int)5 // c4c76835d1286fa240fe02c4da81f6d4
+
 //PAGEBREAK: 17
 // Saved registers for kernel context switches.
 // Don't need to save all the segment registers (%cs, etc),
@@ -61,6 +63,9 @@ struct proc {
   int cur_timeslices;          // The number of timeslices received in current run c4c76835d1286fa240fe02c4da81f6d4
   int queue;                   // The ready queue in which the process is waiting
   int punish;
+
+  int num_run;                // Extra stuff needed for pinfo c4c76835d1286fa240fe02c4da81f6d4
+  int ticks[NUM_QUEUES];
 };
 
 // Process memory is laid out contiguously, low addresses first:
@@ -83,18 +88,8 @@ struct node {
     int use;
 };
 
-#define NUM_QUEUES (int)5
 #define TIMESLICE(i) (int)(1<<i)
 #define AGE_LIMIT (int)50
 
 struct node surplus_nodes[NPROC];
 struct node *queues[NUM_QUEUES];  // lower indices are higher priority
-
-// Struct for getpinfo c4c76835d1286fa240fe02c4da81f6d4
-struct proc_stat {
-  int pid;
-  int runtime;
-  int num_run;
-  int current_queue;
-  int ticks[5];
-};

@@ -22,3 +22,4 @@
 #define SYS_close  21
 #define SYS_waitx  22  // c4c76835d1286fa240fe02c4da81f6d4
 #define SYS_set_priority 23 // c4c76835d1286fa240fe02c4da81f6d4
+#define SYS_getpinfo 24  // c4c76835d1286fa240fe02c4da81f6d4

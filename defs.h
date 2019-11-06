@@ -9,6 +9,7 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
+struct proc_stat;
 
 // bio.c
 void            binit(void);
@@ -124,7 +125,9 @@ void            yield(void);
 void            inc_runtime(void);  // c4c76835d1286fa240fe02c4da81f6d4
 void            punisher(void); // c4c76835d1286fa240fe02c4da81f6d4
 void            inc_timeslice(void); // c4c76835d1286fa240fe02c4da81f6d4
+void            inc_pinfo_ticks(void); // c4c76835d1286fa240fe02c4da81f6d4
 int             set_priority(int); // c4c76835d1286fa240fe02c4da81f6d4
+int             getpinfo(int pid, struct proc_stat* ps); // c4c76835d1286fa240fe02c4da81f6d4
 
 // swtch.S
 void            swtch(struct context**, struct context*);

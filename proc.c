@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "proc_stat.h"
 
 
 struct {
@@ -118,6 +119,11 @@ found:
   p->queue = 0;
   // queues[0] = push(queues[0], p);
 
+  for (int i = 0; i < NUM_QUEUES; i++) {
+    p->ticks[i] = 0;
+  }
+  p->num_run = 0;
+
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -168,6 +174,12 @@ void punisher() {
 void inc_timeslice() {
     acquire(&ptable.lock);
     myproc()->cur_timeslices++;
+    release(&ptable.lock);
+}
+
+void inc_pinfo_ticks() {
+    acquire(&ptable.lock);
+    myproc()->ticks[myproc()->queue]++;
     release(&ptable.lock);
 }
 
@@ -436,13 +448,43 @@ int set_priority(int new_priority) {
   
   old_priority = myproc()->priority;
   myproc()->priority = new_priority;
+  if (new_priority != old_priority) {
+    myproc()->timeslices = 0;
+  }
 
   release(&ptable.lock);
 
-  if (new_priority > old_priority) {
+  if (new_priority != old_priority) {
     yield();
   }
   return old_priority;
+}
+
+int getpinfo(int pid, struct proc_stat* ps) {
+    struct proc *p;
+    acquire(&ptable.lock);
+    for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+        if (p->pid == pid) {
+            ps->pid = p->pid;
+            ps->runtime = p->run_time;
+            ps->num_run = p->num_run;
+#if SCHEDULER == SCHED_MLFQ
+            ps->current_queue = p->queue;
+            for (int i = 0; i < NUM_QUEUES; i++) {
+                ps->ticks[i] = p->ticks[i];
+            }
+#else
+            ps->current_queue = -1;
+            for (int i = 0; i < NUM_QUEUES; i++) {
+                ps->ticks[i] = -1;
+            }
+#endif
+        release(&ptable.lock);
+        return 0;
+        }
+    }
+    release(&ptable.lock);
+    return -1;
 }
 
 //PAGEBREAK: 42
@@ -480,6 +522,7 @@ scheduler(void)
         // to release ptable.lock and then reacquire it
         // before jumping back to us.
         c->proc = p;
+        p->num_run++;
         switchuvm(p);
         p->state = RUNNING;
 
@@ -525,6 +568,7 @@ scheduler(void)
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
       c->proc = selected_proc;
+      selected_proc->num_run++;
       switchuvm(selected_proc);
       selected_proc->state = RUNNING;
 
@@ -572,6 +616,7 @@ scheduler(void)
 #endif
 
     selected_proc->timeslices++;
+    selected_proc->num_run++;
     // Switch to chosen process.  It is the process's job
     // to release ptable.lock and then reacquire it
     // before jumping back to us.
@@ -620,6 +665,7 @@ scheduler(void)
     }
 
     p->cur_timeslices++;
+    p->num_run++;
 
 #ifdef DEBUG
     cprintf("MLFQ: On core %d scheduling %d %s from queue %d with %d timeslices and %d age time\n", c->apicid, p->pid, p->name, p->queue, p->cur_timeslices, p->age_time);

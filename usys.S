@@ -31,3 +31,4 @@ SYSCALL(sbrk)
 SYSCALL(sleep)
 SYSCALL(uptime)
 SYSCALL(set_priority) /* c4c76835d1286fa240fe02c4da81f6d4 */
+SYSCALL(getpinfo) /* c4c76835d1286fa240fe02c4da81f6d4 */

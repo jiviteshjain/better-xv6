@@ -4,6 +4,7 @@
 #include "stat.h"
 #include "user.h"
 #include "fcntl.h"
+#include "proc_stat.h"
 
 int main(void) {
     set_priority(0);
@@ -29,5 +30,11 @@ int main(void) {
     for (int i = 0; i < 10; i++) {
         wait();
     }
+
+    struct proc_stat p;
+    if (getpinfo(getpid(), &p) == 0) {
+        printf(1, "Process information for process with pid %d:\nTotal running time: %d ticks\nNumber of scheduler selections: %d\nCurrent queue: %d\nNumber of running ticks per queue: %d %d %d %d %d\n\n", p.pid, p.runtime, p.num_run, p.current_queue, p.ticks[0], p.ticks[1], p.ticks[2], p.ticks[3], p.ticks[4]);
+    }
+    
     exit();
 }
