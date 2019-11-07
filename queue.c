@@ -70,6 +70,7 @@ int split(struct node** from, struct node** to, int threshold) {
     while (cur != 0) {
         if (ticks - cur->p->age_time > threshold) {
             cur->p->queue--;
+            cur->p->age_time = ticks;
             count++;
             prev = cur;
             cur = cur->next;
@@ -84,7 +85,7 @@ int split(struct node** from, struct node** to, int threshold) {
 
     // something to move
     prev->next = *to;
-    *to = prev;
+    *to = *from;
     *from = cur;
     return count;
 }

@@ -89,7 +89,7 @@ struct node {
 };
 
 #define TIMESLICE(i) (int)(1<<i)
-#define AGE_LIMIT (int)50
+#define AGE_LIMIT (int)30
 
 struct node surplus_nodes[NPROC];
 struct node *queues[NUM_QUEUES];  // lower indices are higher priority

@@ -644,7 +644,12 @@ scheduler(void)
 
     // Age the processes
     for (int i = 1; i < NUM_QUEUES; i++) {
-      split(&queues[i], &queues[i - 1], AGE_LIMIT);
+      int temp = split(&queues[i], &queues[i - 1], AGE_LIMIT);
+#ifdef DEBUG
+      if (temp > 0) {
+        cprintf("Aged %d processes from %d to %d\n", temp, i, i - 1);
+      }
+#endif
     }
 
     // Loop through the queues to find a process to run
@@ -668,7 +673,7 @@ scheduler(void)
     p->num_run++;
 
 #ifdef DEBUG
-    cprintf("MLFQ: On core %d scheduling %d %s from queue %d with %d timeslices and %d age time\n", c->apicid, p->pid, p->name, p->queue, p->cur_timeslices, p->age_time);
+    cprintf("MLFQ: On core %d scheduling %d %s from queue %d with %d timeslices and %d age time (%d)\n", c->apicid, p->pid, p->name, p->queue, p->cur_timeslices, p->age_time, ticks);
 #endif
 
     // Switch to chosen process.  It is the process's job
@@ -849,8 +854,15 @@ kill(int pid)
     if(p->pid == pid){
       p->killed = 1;
       // Wake process from sleep if necessary.
-      if(p->state == SLEEPING)
+      if(p->state == SLEEPING) {
         p->state = RUNNABLE;
+#if SCHEDULER == SCHED_MLFQ
+        // c4c76835d1286fa240fe02c4da81f6d4
+        queues[p->queue] = push(queues[p->queue], p);
+        p->cur_timeslices = 0;
+        p->age_time = ticks;
+#endif
+      }
       release(&ptable.lock);
       return 0;
     }
