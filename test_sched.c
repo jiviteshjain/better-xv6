@@ -9,7 +9,7 @@
 int main(void) {
     set_priority(0);
     int pid;
-    for (int i = 0; i < 35; i++) {
+    for (int i = 0; i < 5; i++) {
         pid = fork();
         if (pid == 0) {
             // set_priority(i*10);
@@ -27,7 +27,7 @@ int main(void) {
         }
         // printf(2, "***Made %d\n", pid);
     }
-    for (int i = 0; i < 35; i++) {
+    for (int i = 0; i < 5; i++) {
         wait();
     }
 

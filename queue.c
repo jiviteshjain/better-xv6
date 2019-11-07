@@ -83,10 +83,25 @@ int split(struct node** from, struct node** to, int threshold) {
         return 0;
     }
 
+    if (*to != 0) {
+        struct node* to_end = *to;
+        while (to_end->next != 0) {
+            to_end = to_end->next;
+        }
+
+        prev->next = 0;
+        to_end->next = *from;
+        *from = cur;
+    } else {
+        prev->next = 0;
+        *to = *from;
+        *from = cur;
+    }
+
     // something to move
-    prev->next = *to;
-    *to = *from;
-    *from = cur;
+    // prev->next = *to;
+    // *to = *from;
+    // *from = cur;
     return count;
 }
 
