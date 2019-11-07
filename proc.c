@@ -22,6 +22,17 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
+// void print_ticks() {
+//     acquire(&ptable.lock);
+//     for (struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+//         if (p->pid >= 4 && p->pid <= 8) {
+//             cprintf("%d %d %d\n", ticks, p->pid, p->queue);
+//         }
+//     }
+
+//     release(&ptable.lock);
+// }
+
 void
 pinit(void)
 {
@@ -644,11 +655,13 @@ scheduler(void)
 
     // Age the processes
     for (int i = 1; i < NUM_QUEUES; i++) {
-      int temp = split(&queues[i], &queues[i - 1], AGE_LIMIT);
 #ifdef DEBUG
+      int temp = split(&queues[i], &queues[i - 1], AGE_LIMIT);
       if (temp > 0) {
         cprintf("Aged %d processes from %d to %d\n", temp, i, i - 1);
       }
+#else
+      split(&queues[i], &queues[i - 1], AGE_LIMIT);
 #endif
     }
 
