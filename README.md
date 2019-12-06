@@ -11,7 +11,10 @@ This is a modification of the xv6 operating system in which the following featur
 Details about the scope and implementation of these features are available in `REPORT.pdf` (or `REPORT.md`).
 
 ## Get it running
-1. Ensure you have the Qemu Emulator installed.
+1. Ensure you have the Qemu Emulator installed. If not:
+```(shell)
+# apt-get install qemu
+```
 2. Build the OS:
 ```(shell)
 $ make [options]
@@ -27,12 +30,12 @@ $ make clean
 ```
 
 The options can be one or more of the following:
-- CPUS=[1, 2, ...]
+- `CPUS=[1, 2, ...]`
 *The added features have been tested on up to 2 CPU cores.*
-- DEBUG=[TRUE, FALSE]
+- `DEBUG=[TRUE, FALSE]`
 Enabling DEBUG mode causes the OS to print scheduling information to STDOUT. The output is verbose and makes it hard to otherwise use the system.
-- SCHEDULER=[FCFS, RR, PBS, MLFQ]
-The options stand for first-come-first-serve, round-robin, priority-based and multi-level-feedback-queue respectively
+- `SCHEDULER=[FCFS, RR, PBS, MLFQ]`
+The options stand for first-come-first-serve, round-robin, priority-based and multi-level-feedback-queue respectively.
 
 *Ensure that the options selected in step 2 and 3 are the same.*
 
