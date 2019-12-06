@@ -30,11 +30,11 @@ $ make clean
 ```
 
 The options can be one or more of the following:
-- `CPUS=[1, 2, ...]`
+- `CPUS=[1, 2, ...]` Defaults to 1.
 *The added features have been tested on up to 2 CPU cores.*
-- `DEBUG=[TRUE, FALSE]`
-Enabling DEBUG mode causes the OS to print scheduling information to STDOUT. The output is verbose and makes it hard to otherwise use the system.
-- `SCHEDULER=[FCFS, RR, PBS, MLFQ]`
+- `DEBUG=[TRUE, FALSE]` Defaults to `FALSE`.
+Enabling DEBUG mode causes the OS to print scheduling information to `STDOUT`. The output is verbose and makes it hard to otherwise use the system.
+- `SCHEDULER=[FCFS, RR, PBS, MLFQ]` Defaults to `RR`.
 The options stand for first-come-first-serve, round-robin, priority-based and multi-level-feedback-queue respectively.
 
 *Ensure that the options selected in step 2 and 3 are the same.*
